@@ -27,6 +27,10 @@ Gem::Specification.new do |spec|
   spec.require_paths = ["lib"]
 
   spec.add_dependency "event_stream_parser", ">= 0.3.0", "< 2.0.0"
-  spec.add_dependency "faraday", ">= 1"
-  spec.add_dependency "faraday-multipart", ">= 1"
+  spec.add_dependency "faraday", ">= 1", "< 2.0"
+
+  # faraday-multipart is included within faraday itself until version 2.0.
+  # Disabling it here because faraday-multipart requires Ruby 2.6.
+  # faraday gem locked to 2.0 or below (before this change it was '>= 1').
+  # spec.add_dependency "faraday-multipart", ">= 1"
 end

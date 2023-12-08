@@ -1,5 +1,4 @@
 require "faraday"
-require "faraday/multipart"
 
 require_relative "openai/http"
 require_relative "openai/client"
