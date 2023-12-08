@@ -25,6 +25,10 @@ Gem::Specification.new do |spec|
   spec.executables   = spec.files.grep(%r{^exe/}) { |f| File.basename(f) }
   spec.require_paths = ["lib"]
 
-  spec.add_dependency "faraday", ">= 1"
-  spec.add_dependency "faraday-multipart", ">= 1"
+  spec.add_dependency "faraday", ">= 1", "< 2.0"
+
+  # faraday-multipart is included within faraday itself until version 2.0.
+  # Disabling it here because faraday-multipart requires Ruby 2.6.
+  # faraday gem locked to 2.0 or below (before this change it was '>= 1').
+  #spec.add_dependency "faraday-multipart", ">= 1"
 end
