@@ -65,7 +65,11 @@ module OpenAI
         end
 
         parser.feed(chunk) do |_type, data|
-          user_proc.call(JSON.parse(data)) unless data == "[DONE]"
+          begin
+            user_proc.call(JSON.parse(data)) unless data == "[DONE]"
+          rescue JSON::ParserError
+            # Ignore invalid JSON.
+          end
         end
       end
     end
