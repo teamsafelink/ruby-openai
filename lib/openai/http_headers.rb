@@ -1,3 +1,5 @@
+require "hash-polyfill"
+
 module OpenAI
   module HTTPHeaders
     def add_headers(headers)
