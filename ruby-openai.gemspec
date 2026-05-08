@@ -9,7 +9,7 @@ Gem::Specification.new do |spec|
   spec.summary       = "OpenAI API + Ruby! 🤖❤️"
   spec.homepage      = "https://github.com/alexrudall/ruby-openai"
   spec.license       = "MIT"
-  spec.required_ruby_version = Gem::Requirement.new(">= 2.6.0")
+  spec.required_ruby_version = Gem::Requirement.new(">= 2.3.8")
 
   spec.metadata["homepage_uri"] = spec.homepage
   spec.metadata["source_code_uri"] = "https://github.com/alexrudall/ruby-openai"
@@ -28,7 +28,12 @@ Gem::Specification.new do |spec|
   spec.executables   = spec.files.grep(%r{^exe/}) { |f| File.basename(f) }
   spec.require_paths = ["lib"]
 
-  spec.add_dependency "event_stream_parser", ">= 0.3.0", "< 2.0.0"
-  spec.add_dependency "faraday", ">= 1"
-  spec.add_dependency "faraday-multipart", ">= 1"
+  # Ruby 2.3.8 compatibility constraints (skyway_compat fork):
+  #   * event_stream_parser is vendored under lib/openai/event_stream_parser.rb
+  #     because every released version of the gem requires Ruby >= 2.6.
+  #   * faraday must stay below 1.1 — 1.0.x is the only 1.x line that supports
+  #     Ruby 2.3 (1.1+ requires >= 2.4, 2.0+ requires >= 2.6).
+  #   * faraday-multipart is omitted; multipart support is built into faraday 1.x
+  #     and the standalone gem requires Ruby 2.6+.
+  spec.add_dependency "faraday", ">= 1.0", "< 1.1"
 end
