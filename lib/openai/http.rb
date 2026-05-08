@@ -60,7 +60,11 @@ module OpenAI
         f.request(:multipart) if multipart
         f.use MiddlewareErrors if @log_errors
         f.response :raise_error
-        f.response :json
+        # Restrict the JSON parser middleware to JSON content types so binary
+        # responses (e.g. mp3, png) reach `parse_json` as a String pass-through.
+        # Faraday 2.x's built-in :json middleware does this by default; faraday
+        # 1.x's faraday_middleware does not.
+        f.response :json, content_type: %r{\bjson$}
       end
 
       @faraday_middleware&.call(connection)

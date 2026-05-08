@@ -33,7 +33,10 @@ Gem::Specification.new do |spec|
   #     because every released version of the gem requires Ruby >= 2.6.
   #   * faraday must stay below 1.1 — 1.0.x is the only 1.x line that supports
   #     Ruby 2.3 (1.1+ requires >= 2.4, 2.0+ requires >= 2.6).
+  #   * faraday_middleware (~> 1.2) supplies `:json` response middleware that
+  #     faraday 2.x bundles natively but faraday 1.x does not.
   #   * faraday-multipart is omitted; multipart support is built into faraday 1.x
   #     and the standalone gem requires Ruby 2.6+.
   spec.add_dependency "faraday", ">= 1.0", "< 1.1"
+  spec.add_dependency "faraday_middleware", "~> 1.2"
 end

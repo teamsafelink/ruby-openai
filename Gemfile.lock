@@ -3,6 +3,7 @@ PATH
   specs:
     ruby-openai (8.3.0)
       faraday (>= 1.0, < 1.1)
+      faraday_middleware (~> 1.2)
 
 GEM
   remote: https://rubygems.org/
@@ -19,6 +20,8 @@ GEM
     dotenv (2.8.1)
     faraday (1.0.1)
       multipart-post (>= 1.2, < 3)
+    faraday_middleware (1.2.1)
+      faraday (~> 1.0)
     hashdiff (1.2.1)
     json (2.19.5)
     multipart-post (2.4.1)
