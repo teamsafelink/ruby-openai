@@ -1,0 +1,102 @@
+---
+http_interactions:
+- request:
+    method: post
+    uri: https://api.openai.com/v1/moderations
+    body:
+      encoding: UTF-8
+      string: '{"input":"Have a great day!"}'
+    headers:
+      Content-Type:
+      - application/json
+      Authorization:
+      - Bearer <OPENAI_ACCESS_TOKEN>
+      Accept-Encoding:
+      - gzip;q=1.0,deflate;q=0.6,identity;q=0.3
+      Accept:
+      - "*/*"
+      User-Agent:
+      - Ruby
+  response:
+    status:
+      code: 200
+      message: OK
+    headers:
+      Date:
+      - Sun, 10 Aug 2025 15:41:14 GMT
+      Content-Type:
+      - application/json
+      Transfer-Encoding:
+      - chunked
+      Connection:
+      - keep-alive
+      Openai-Version:
+      - '2020-10-01'
+      Openai-Organization:
+      - user-jxm65ijkzc1qrfhc0ij8moic
+      Openai-Project:
+      - proj_GeQgevTU0ldCrlkkXei9bV0k
+      X-Request-Id:
+      - req_21f1452b682f630a9597022bf6b2874d
+      Openai-Processing-Ms:
+      - '193'
+      X-Envoy-Upstream-Service-Time:
+      - '198'
+      Strict-Transport-Security:
+      - max-age=31536000; includeSubDomains; preload
+      Cf-Cache-Status:
+      - DYNAMIC
+      Set-Cookie:
+      - __cf_bm=NrvT3z3B.tpG2tEhVs3pFoKKV4VozwzWLIV.zmOCwsM-1754840474-1.0.1.1-xi_dp0c5yfjX4iCmhStYewpo6nf24MjXPcJtY81cJ8E_Rl341BoifvO1uItnQcwsOfn6w8Jq9dix1mpUwok0HkNaUO4GsvWKHpfTJ5V6XtQ;
+        path=/; expires=Sun, 10-Aug-25 16:11:14 GMT; domain=.api.openai.com; HttpOnly;
+        Secure; SameSite=None
+      - _cfuvid=lwY5MgJ2WZpI94ihnovGeEuSHYzxIuIlQw8X7JXsT2k-1754840474962-0.0.1.1-604800000;
+        path=/; domain=.api.openai.com; HttpOnly; Secure; SameSite=None
+      X-Content-Type-Options:
+      - nosniff
+      Server:
+      - cloudflare
+      Cf-Ray:
+      - 96d098a66860640f-LHR
+      Alt-Svc:
+      - h3=":443"; ma=86400
+    body:
+      encoding: ASCII-8BIT
+      string: |-
+        {
+          "id": "modr-C32SYHp4XLB0KRtDcKtdRbiP8kSTM",
+          "model": "text-moderation-007",
+          "results": [
+            {
+              "flagged": false,
+              "categories": {
+                "sexual": false,
+                "hate": false,
+                "harassment": false,
+                "self-harm": false,
+                "sexual/minors": false,
+                "hate/threatening": false,
+                "violence/graphic": false,
+                "self-harm/intent": false,
+                "self-harm/instructions": false,
+                "harassment/threatening": false,
+                "violence": false
+              },
+              "category_scores": {
+                "sexual": 0.000030256842364906333,
+                "hate": 7.682696434585523e-8,
+                "harassment": 2.379463239776669e-6,
+                "self-harm": 5.0034135057330786e-8,
+                "sexual/minors": 2.92258562240022e-7,
+                "hate/threatening": 1.4745440424235312e-9,
+                "violence/graphic": 2.9348245789151406e-7,
+                "self-harm/intent": 6.321590717561776e-8,
+                "self-harm/instructions": 8.927665930968942e-7,
+                "harassment/threatening": 3.908326959844999e-7,
+                "violence": 0.00001449603951186873
+              }
+            }
+          ]
+        }
+  recorded_at: Sun, 10 Aug 2025 15:41:15 GMT
+recorded_with: VCR 6.3.1

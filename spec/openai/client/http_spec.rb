@@ -31,13 +31,15 @@ RSpec.describe OpenAI::HTTP do
 
     describe ".json_post" do
       let(:response) do
-        OpenAI::Client.new.chat(
-          parameters: {
-            model: "gpt-3.5-turbo",
-            messages: [{ role: "user", content: "Hello!" }],
-            stream: stream
-          }
-        )
+        OpenAI::Client.new.chat(parameters: parameters)
+      end
+
+      let(:parameters) do
+        {
+          model: "gpt-3.5-turbo",
+          messages: [{ role: "user", content: "Hello!" }],
+          stream: stream
+        }
       end
 
       context "not streaming" do
@@ -53,7 +55,7 @@ RSpec.describe OpenAI::HTTP do
       context "streaming" do
         let(:chunks) { [] }
         let(:stream) do
-          proc do |chunk, _bytesize|
+          proc do |chunk, _event|
             chunks << chunk
           end
         end
@@ -62,6 +64,12 @@ RSpec.describe OpenAI::HTTP do
           expect { response }.to raise_error do |error|
             expect(timeout_errors).to include(error.class)
           end
+        end
+
+        it "doesn't change the parameters stream proc" do
+          expect { response }.to raise_error(Faraday::ConnectionFailed)
+
+          expect(parameters[:stream]).to eq(stream)
         end
       end
     end
@@ -85,7 +93,7 @@ RSpec.describe OpenAI::HTTP do
 
     describe ".delete" do
       let(:response) do
-        OpenAI::Client.new.finetunes.delete(fine_tuned_model: "1a")
+        OpenAI::Client.new.files.delete(id: "1a")
       end
 
       it "times out" do
@@ -96,94 +104,37 @@ RSpec.describe OpenAI::HTTP do
     end
   end
 
-  describe ".to_json_stream" do
-    context "with a proc" do
-      let(:user_proc) { proc { |x| x } }
-      let(:stream) { OpenAI::Client.new.send(:to_json_stream, user_proc: user_proc) }
+  describe ".get" do
+    context "with an error response" do
+      let(:cassette) { "mocks/http get with error response".downcase }
 
-      it "returns a proc" do
-        expect(stream).to be_a(Proc)
-      end
-
-      context "when called with a string containing a single JSON object" do
-        it "calls the user proc with the data parsed as JSON" do
-          expect(user_proc).to receive(:call).with(JSON.parse('{"foo": "bar"}'))
-          stream.call('data: { "foo": "bar" }')
-        end
-      end
-
-      context "when called with string containing more than one JSON object" do
-        it "calls the user proc for each data parsed as JSON" do
-          expect(user_proc).to receive(:call).with(JSON.parse('{"foo": "bar"}'))
-          expect(user_proc).to receive(:call).with(JSON.parse('{"baz": "qud"}'))
-
-          stream.call(<<-CHUNK)
-            data: { "foo": "bar" }
-
-            data: { "baz": "qud" }
-
-            data: [DONE]
-
-          CHUNK
-        end
-      end
-
-      context "when called with a string that does not even resemble a JSON object" do
-        let(:bad_examples) { ["", "foo", "data: ", "data: foo"] }
-
-        it "does not call the user proc" do
-          bad_examples.each do |chunk|
-            expect(user_proc).to_not receive(:call)
-            stream.call(chunk)
-          end
-        end
-      end
-
-      context "when called with a string containing that looks like a JSON object but is invalid" do
-        let(:chunk) do
-          <<-CHUNK
-            data: { "foo": "bar" }
-            data: { BAD ]:-> JSON }
-          CHUNK
-        end
-
-        it "does not raise an error" do
-          expect(user_proc).to receive(:call).with(JSON.parse('{"foo": "bar"}'))
-
-          expect do
-            stream.call(chunk)
-          end.not_to raise_error
-        end
-      end
-
-      context "when called with a string containing an error" do
-        let(:chunk) do
-          <<-CHUNK
-            data: { "foo": "bar" }
-            error: { "message": "A bad thing has happened!" }
-          CHUNK
-        end
-
-        it "does not raise an error" do
-          expect(user_proc).to receive(:call).with(JSON.parse('{ "foo": "bar" }'))
-          expect(user_proc).to receive(:call).with(
-            JSON.parse('{ "message": "A bad thing has happened!" }')
-          )
-
-          expect do
-            stream.call(chunk)
-          end.not_to raise_error
+      it "raises an HTTP error" do
+        VCR.use_cassette(cassette, record: :none) do
+          OpenAI::Client.new.models.retrieve(id: "text-ada-001")
+        rescue Faraday::Error => e
+          expect(e.response).to include(status: 400)
+        else
+          raise "Expected to raise Faraday::BadRequestError"
         end
       end
     end
   end
 
-  describe ".to_json" do
+  describe ".parse_json" do
     context "with a jsonl string" do
       let(:body) { "{\"prompt\":\":)\"}\n{\"prompt\":\":(\"}\n" }
-      let(:parsed) { OpenAI::Client.new.send(:to_json, body) }
+      let(:parsed) { OpenAI::Client.new.send(:parse_json, body) }
 
       it { expect(parsed).to eq([{ "prompt" => ":)" }, { "prompt" => ":(" }]) }
+    end
+
+    context "with a non-json string containing newline-brace pattern" do
+      let(:body) { "Hello}\n{World" }
+      let(:parsed) { OpenAI::Client.new.send(:parse_json, body) }
+
+      it "returns the original string when JSON parsing fails" do
+        expect(parsed).to eq("Hello}\n{World")
+      end
     end
   end
 
@@ -192,6 +143,18 @@ RSpec.describe OpenAI::HTTP do
     let(:uri) { OpenAI::Client.new.send(:uri, path: path) }
 
     it { expect(uri).to eq("https://api.openai.com/v1/chat") }
+
+    context "uri_base with version included" do
+      before do
+        OpenAI.configuration.uri_base = "https://api.openai.com/v1/"
+      end
+
+      after do
+        OpenAI.configuration.uri_base = "https://api.openai.com/"
+      end
+
+      it { expect(uri).to eq("https://api.openai.com/v1/chat") }
+    end
 
     context "uri_base without trailing slash" do
       before do
@@ -238,10 +201,12 @@ RSpec.describe OpenAI::HTTP do
 
     let(:headers) { OpenAI::Client.new.send(:headers) }
 
-    it {
-      expect(headers).to eq({ "Authorization" => "Bearer #{OpenAI.configuration.access_token}",
-                              "Content-Type" => "application/json", "OpenAI-Organization" => nil })
-    }
+    it "includes expected headers" do
+      expect(headers).to have_key("Authorization")
+      expect(headers["Authorization"]).to match(/^Bearer .+/)
+      expect(headers).to have_key("Content-Type")
+      expect(headers["Content-Type"]).to eq("application/json")
+    end
 
     describe "with Azure" do
       before do
@@ -254,10 +219,66 @@ RSpec.describe OpenAI::HTTP do
 
       let(:headers) { OpenAI::Client.new.send(:headers) }
 
-      it {
-        expect(headers).to eq({ "Content-Type" => "application/json",
-                                "api-key" => OpenAI.configuration.access_token })
-      }
+      it "includes expected headers" do
+        expect(headers).to have_key("api-key")
+        expect(headers["api-key"]).not_to be_nil
+        expect(headers).to have_key("Content-Type")
+        expect(headers["Content-Type"]).to eq("application/json")
+      end
+    end
+  end
+
+  describe "logging errors" do
+    let(:cassette) { "mocks/http get with error response".downcase }
+
+    before do
+      @original_stdout = $stdout
+      $stdout = StringIO.new
+    end
+
+    after do
+      $stdout = @original_stdout
+    end
+
+    it "is disabled by default" do
+      VCR.use_cassette(cassette, record: :none) do
+        expect { OpenAI::Client.new.models.retrieve(id: "text-ada-001") }
+          .to raise_error Faraday::Error
+
+        $stdout.rewind
+        captured_stdout = $stdout.string
+        expect(captured_stdout).not_to include("OpenAI HTTP Error")
+      end
+    end
+
+    describe "when log_errors is set to true" do
+      let(:log_errors) { true }
+
+      it "logs errors" do
+        VCR.use_cassette(cassette, record: :none) do
+          expect { OpenAI::Client.new(log_errors: log_errors).models.retrieve(id: "text-ada-001") }
+            .to raise_error Faraday::Error
+
+          $stdout.rewind
+          captured_stdout = $stdout.string
+          expect(captured_stdout).to include("OpenAI HTTP Error")
+        end
+      end
+    end
+
+    describe "when log_errors is set to false" do
+      let(:log_errors) { false }
+
+      it "does not log errors" do
+        VCR.use_cassette(cassette, record: :none) do
+          expect { OpenAI::Client.new(log_errors: log_errors).models.retrieve(id: "text-ada-001") }
+            .to raise_error Faraday::Error
+
+          $stdout.rewind
+          captured_stdout = $stdout.string
+          expect(captured_stdout).not_to include("OpenAI HTTP Error")
+        end
+      end
     end
   end
 end

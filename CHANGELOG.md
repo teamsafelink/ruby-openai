@@ -5,6 +5,216 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+### Added
+
+- Add public support, end-of-life, and migration documentation.
+- Add clearer issue template labels and bug report version fields.
+
+## [8.3.0] - 2025-08-29
+
+### Added
+
+- Add Conversations API - thanks to [@parterburn](https://github.com/parterburn) for the great PR!
+
+## [8.2.1] - 2025-08-29
+
+### Fixed
+
+- Fix bug introduce in v8.2 which broke streaming with Faraday 2.1.0 - thanks to [@daikimiura](https://github.com/daikimiura) for the excellent PR!
+
+## [8.2.0] - 2025-08-10
+
+### Added
+
+- Add Security.md and activate private vulnerability reporting
+- Add RealTime endpoint to create WebRTC token - thank you to [@ngelx](https://github.com/ngelx) for the PR and others for input!
+- Add multi-image upload - thank you to [@ryankon](https://github.com/ryankon) and others for requesting.
+- Refactor streaming so that Chat, Responses, Assistant Runs and any others where events are streamed now send the event to the Proc, replacing unused _bytesize. Search the README for `_event` to see how to use this. Important change implemented by [@ingemar](https://github.com/ingemar)!
+- Handle OpenAI::Files request parameters - thank you to [@okorepanov](https://github.com/okorepanov) for the PR.
+- Add Gemini docs - thanks to [@francis](https://github.com/francis).
+- Add web proxy debugging docs - thanks to [@cpb](https://github.com/cpb).
+- Add Rails / ActiveStorage transcription docs - thanks to [@AndreyAzimov](https://github.com/AndreyAzimov).
+
+## [8.1.0] - 2025-03-30
+
+### Added
+
+- Add Vector#search endpoint - thank you [@jaebrownn](https://github.com/jaebrownn) for this PR!
+
+## [8.0.0] - 2025-03-14
+
+### Added
+
+- Add Responses endpoints - thanks to my excellent colleague [@simonx1](https://github.com/simonx1) for your work on this!
+- Add docs for the Deepseek chat API.
+- Add Models#delete - thanks to [bennysghost](https://github.com/bennysghost).
+
+### Fixed
+
+- [BREAKING] Try to JSON parse everything. If it fails, fall back gracefully to returning the raw response. Thank you to [@gregszero](https://github.com/gregszero) and the many others who raised this issue.
+- [BREAKING] An unknown file type will no longer prevent file upload, but instead raise a warning.
+- [BREAKING] ruby-openai longer requires "faraday/multipart" for Faraday 1 users (Faraday 1 already includes it and it was causing a warning). Thanks to [ajGingrich](https://github.com/ajGingrich) for raising this!
+- Add `user_data` and `evals` as options for known File types - thank you to [jontec](https://github.com/jontec) for this fix!
+- Fix a syntax ambiguity in Client.rb - thank you to [viralpraxis](https://github.com/viralpraxis).
+
+### Removed
+
+- [BREAKING] Backwards compatibility for `require "ruby/openai"` is removed - from v8 on you MUST use `require "openai"`. This fixes a deprecation warning with Ruby 3.4. Thanks to [@ndemianc](https://github.com/ndemianc) for this PR.
+- [BREAKING] Removed support for Ruby 2.6. ruby-openai may still work with this version but it's no longer supported.
+- Removed the 'OpenAI-Beta' header from Batches API requests.
+
+## [7.4.0] - 2025-02-10
+
+### Added
+
+- Add support for OPENAI_ADMIN_TOKEN to allow for administrative endpoints to be called.
+- Add support for Usage endpoints.
+
+## [7.3.1] - 2024-10-15
+
+### Fixed
+
+- Fix 404 error when using Client#embeddings with Azure - thanks to [@ymtdzzz](https://github.com/ymtdzzz) for raising this in a really clear issue.
+
+## [7.3.0] - 2024-10-11
+
+### Added
+
+- Add ability to (with the right incantations) retrieve the chunks used by an Assistant file search - thanks to [@agamble](https://github.com/agamble) for the addition!
+
+## [7.2.0] - 2024-10-10
+
+### Added
+
+- Add ability to pass parameters to Files#list endpoint - thanks to [@parterburn](https://github.com/parterburn)!
+- Add Velvet observability platform to README - thanks to [@philipithomas](https://github.com/philipithomas)
+- Add Assistants::Messages#delete endpoint - thanks to [@mochetts](https://github.com/mochetts)!
+
+## [7.1.0] - 2024-06-10
+
+### Added
+
+- Add new Vector Store endpoints - thanks to [@willywg](https://github.com/willywg) for this PR!
+- Add parameters to batches.list endpoint so you can for example use `after` - thanks to [@marckohlbrugge](https://github.com/marckohlbrugge)!
+- Add vision as permitted purpose for files - thanks again to [@willywg](https://github.com/willywg) for the PR.
+- Add improved README example of tool calling - thanks [@krschacht](https://github.com/krschacht) - check out his project [HostedGPT](https://github.com/AllYourBot/hostedgpt)!
+
+### Fixed
+
+- Fix broken link in README table of contents - thanks to [@garrettgsb](https://github.com/garrettgsb)!
+- Skip sending nil headers - thanks to [@drnic](https://github.com/drnic)!
+
+## [7.0.1] - 2024-04-30
+
+### Fixed
+
+- Update to v2 of Assistants in Messages, Runs, RunSteps and Threads - thanks to [@willywg](https://github.com/willywg) and others for pointing this out.
+
+## [7.0.0] - 2024-04-27
+
+### Added
+
+- Add support for Batches, thanks to [@simonx1](https://github.com/simonx1) for the PR!
+- Allow use of local LLMs like Ollama! Thanks to [@ThomasSevestre](https://github.com/ThomasSevestre)
+- Update to v2 of the Assistants beta & add documentation on streaming from an Assistant.
+- Add Assistants endpoint to create and run a thread in one go, thank you [@quocphien90](https://github.com/
+  quocphien90)
+- Add missing parameters (order, limit, etc) to Runs, RunSteps and Messages - thanks to [@shalecraig](https://github.com/shalecraig) and [@coezbek](https://github.com/coezbek)
+- Add missing Messages#list spec - thanks [@adammeghji](https://github.com/adammeghji)
+- Add Messages#modify to README - thanks to [@nas887](https://github.com/nas887)
+- Don't add the api_version (`/v1/`) to base_uris that already include it - thanks to [@kaiwren](https://github.com/kaiwren) for raising this issue
+- Allow passing a `StringIO` to Files#upload - thanks again to [@simonx1](https://github.com/simonx1)
+- Add Ruby 3.3 to CI
+
+### Security
+
+- [BREAKING] ruby-openai will no longer log out API errors by default - you can reenable by passing `log_errors: true` to your client. This will help to prevent leaking secrets to logs. Thanks to [@lalunamel](https://github.com/lalunamel) for this PR.
+
+### Removed
+
+- [BREAKING] Remove deprecated edits endpoint.
+
+### Fixed
+
+- Fix README DALL·E 3 error - thanks to [@clayton](https://github.com/clayton)
+- Fix README tool_calls error and add missing tool_choice info - thanks to [@Jbrito6492](https://github.com/Jbrito6492)
+
+## [6.5.0] - 2024-03-31
+
+### Added
+
+- Add back the deprecated Completions endpoint that I removed a bit prematurely. Thanks, [@mishranant](https://github.com/
+  mishranant) and everyone who requested this.
+
+## [6.4.0] - 2024-03-27
+
+### Added
+
+- Add DALL·E 3 to specs and README - thanks to [@Gary-H9](https://github.com/Gary-H9)
+- Add Whisper transcription language selection parameter to README - thanks to [@nfedyashev](https://github.com/nfedyashev)
+- Add bundle exec rake lint and bundle exec rake test to make development easier - thanks to [@ignacio-chiazzo](https://github.com/ignacio-chiazzo)
+- Add link to [https://github.com/sponsors/alexrudall](https://github.com/sponsors/alexrudall) when users run `bundle fund`
+
+### Fixed
+
+- Update README and spec to use tool calls instead of functions - thanks to [@mpallenjr](https://github.com/mpallenjr)
+- Remove nonexistent Thread#list method - thanks again! to [@ignacio-chiazzo](https://github.com/ignacio-chiazzo)
+- Update finetunes docs in README to use chat instead of completions endpoint - thanks to [@blefev](https://github.com/blefev)
+
+## [6.3.1] - 2023-12-04
+
+### Fixed
+
+- Allow any kind of file (eg. PDFs) to be uploaded to the API, not just JSONL files. Thank you [@stefan-kp](https://github.com/stefan-kp) for the PR!
+
+## [6.3.0] - 2023-11-26
+
+### Added
+
+- Add ability to pass [Faraday middleware](https://lostisland.github.io/faraday/#/middleware/index) to the client in a block, eg. to enable verbose logging - shout out to [@obie](https://github.com/obie) for pushing for this.
+- Add better error logging to the client by default.
+- Bump Event Source to v1, thank you [@atesgoral](https://github.com/atesgoral) @ Shopify!
+
+## [6.2.0] - 2023-11-15
+
+### Added
+
+- Add text-to-speech! Thank you [@codergeek121](https://github.com/codergeek121)
+
+## [6.1.0] - 2023-11-14
+
+### Added
+
+- Add support for Assistants, Threads, Messages and Runs. Thank you [@Haegin](https://github.com/Haegin) for the excellent work on this PR, and many reviewers for their contributions!
+
+## [6.0.1] - 2023-11-07
+
+### Fix
+
+- Gracefully handle the case where an HTTP error response may not have valid JSON in its body. Thank you [@atesgoral](https://github.com/atesgoral)!
+
+## [6.0.0] - 2023-11-06
+
+### Added
+
+- [BREAKING] HTTP errors will now be raised by ruby-openai as Faraday:Errors, including when streaming! Implemented by [@atesgoral](https://github.com/atesgoral)
+- [BREAKING] Switch from legacy Finetunes to the new Fine-tune-jobs endpoints. Implemented by [@lancecarlson](https://github.com/lancecarlson)
+- [BREAKING] Remove deprecated Completions endpoints - use Chat instead.
+
+### Fixed
+
+- [BREAKING] Fix issue where :stream parameters were replaced by a boolean in the client application. Thanks to [@martinjaimem](https://github.com/martinjaimem), [@vickymadrid03](https://github.com/vickymadrid03) and [@nicastelo](https://github.com/nicastelo) for spotting and fixing this issue.
+
+## [5.2.0] - 2023-10-30
+
+### Fixed
+
+- Added more spec-compliant SSE parsing: see here https://html.spec.whatwg.org/multipage/server-sent-events.html#event-stream-interpretation
+- Fixes issue where OpenAI or an intermediary returns only partial JSON per chunk of streamed data
+- Huge thanks to [@atesgoral](https://github.com/atesgoral) for this important fix!
+
 ## [5.1.0] - 2023-08-20
 
 ### Added
