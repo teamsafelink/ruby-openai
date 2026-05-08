@@ -1,5 +1,4 @@
-require "event_stream_parser"
-
+require_relative "event_stream_parser"
 require_relative "http_headers"
 
 module OpenAI

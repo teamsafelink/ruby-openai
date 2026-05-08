@@ -3,7 +3,7 @@ module OpenAI
     DONE = "[DONE]".freeze
     private_constant :DONE
 
-    def initialize(user_proc:, parser: EventStreamParser::Parser.new)
+    def initialize(user_proc:, parser: OpenAI::EventStreamParser::Parser.new)
       @user_proc = user_proc
       @parser = parser
 
