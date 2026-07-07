@@ -18,10 +18,13 @@ module OpenAI
     end
 
     def json_post(path:, parameters:, query_parameters: {})
+      stream = stream_for(parameters[:stream])
       parse_json(conn.post(uri(path: path)) do |req|
-        configure_json_post_request(req, parameters)
+        configure_json_post_request(req, parameters, stream)
         req.params = req.params.merge(query_parameters)
       end&.body)
+    rescue Faraday::Error => e
+      raise recover_streamed_error(e, stream)
     end
 
     def multipart_post(path:, parameters: nil)
@@ -98,18 +101,45 @@ module OpenAI
       end
     end
 
-    def configure_json_post_request(req, parameters)
+    # Builds the Stream wrapper for a streamed request, or nil for a normal one.
+    # Raised here (rather than mid-request) so an invalid stream param fails
+    # before any HTTP call is made.
+    def stream_for(stream)
+      return unless stream
+      return Stream.new(user_proc: stream) if stream.respond_to?(:call)
+
+      raise ArgumentError, "The stream parameter must be a Proc or have a #call method"
+    end
+
+    def configure_json_post_request(req, parameters, stream)
       req_parameters = parameters.dup
 
-      if parameters[:stream].respond_to?(:call)
-        req.options.on_data = Stream.new(user_proc: parameters[:stream]).to_proc
+      if stream
+        req.options.on_data = stream.to_proc
         req_parameters[:stream] = true # Necessary to tell OpenAI to stream.
-      elsif parameters[:stream]
-        raise ArgumentError, "The stream parameter must be a Proc or have a #call method"
       end
 
       req.headers = headers
       req.body = req_parameters.to_json
+    end
+
+    # On faraday 1.x the on_data callback receives no env, so a streamed error
+    # response is consumed chunk-by-chunk and never populates env.body -
+    # error.response[:body] comes back nil. Rebuild the error from the bytes the
+    # Stream buffered. No-op when there was no stream, or when the body is
+    # already present (faraday 2.x), so upstream behaviour is preserved.
+    def recover_streamed_error(error, stream)
+      return error unless stream && streamed_body_missing?(error)
+
+      buffered = stream.buffered_response
+      return error if buffered.nil? || buffered.empty?
+
+      error.class.new((error.response || {}).merge(body: parse_json(buffered)))
+    end
+
+    def streamed_body_missing?(error)
+      body = error.response && error.response[:body]
+      body.nil? || body == ""
     end
   end
 end
