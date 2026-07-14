@@ -1,5 +1,16 @@
 require "faraday"
-require "faraday/multipart" if Gem::Version.new(Faraday::VERSION) >= Gem::Version.new("2.0")
+if Gem::Version.new(Faraday::VERSION) >= Gem::Version.new("2.0")
+  require "faraday/multipart"
+else
+  # faraday < 2.0 ships multipart support in-box, but the JSON response
+  # middleware (`f.response :json`) only lives in the separate
+  # faraday_middleware gem on the 1.x line. faraday 2.x also transitively
+  # requires "logger"; on 1.x we need to load it ourselves so log_message
+  # below can build a Logger.
+  require "faraday_middleware"
+  require "logger"
+end
+require_relative "openai/compatibility"
 require_relative "openai/http"
 require_relative "openai/client"
 require_relative "openai/files"

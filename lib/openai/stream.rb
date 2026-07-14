@@ -3,9 +3,19 @@ module OpenAI
     DONE = "[DONE]".freeze
     private_constant :DONE
 
-    def initialize(user_proc:, parser: EventStreamParser::Parser.new)
+    # Cap on the raw bytes retained for error recovery. An error response is a
+    # short JSON payload, whereas a successful stream can be arbitrarily long -
+    # we only ever need the (small) error body, so we never grow past this.
+    MAX_BUFFERED_BYTES = 8_192
+    private_constant :MAX_BUFFERED_BYTES
+
+    def initialize(user_proc:, parser: OpenAI::EventStreamParser::Parser.new)
       @user_proc = user_proc
       @parser = parser
+      # Retains the raw response so the HTTP layer can recover a streamed error
+      # body on faraday 1.x, where on_data receives no env and the body never
+      # reaches env.body. Unused on faraday 2.x (env-based errors raise first).
+      @buffered_response = String.new
 
       # To be backwards compatible, we need to check how many arguments the user_proc takes.
       @user_proc_arity =
@@ -20,6 +30,8 @@ module OpenAI
     def call(chunk, _bytes, env = nil)
       handle_http_error(chunk: chunk, env: env) if env && env.status != 200
 
+      @buffered_response << chunk if @buffered_response.bytesize < MAX_BUFFERED_BYTES
+
       parser.feed(chunk) do |event, data|
         next if data == DONE
 
@@ -31,6 +43,10 @@ module OpenAI
     def to_proc
       method(:call).to_proc
     end
+
+    # Raw bytes seen so far (bounded), used by the HTTP layer to reconstruct a
+    # streamed error body on faraday 1.x.
+    attr_reader :buffered_response
 
     private
 

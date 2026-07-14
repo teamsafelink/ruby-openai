@@ -1,0 +1,97 @@
+# frozen_string_literal: true
+
+# Vendored copy of the event_stream_parser gem (https://github.com/Shopify/event_stream_parser),
+# version 1.0.0, MIT-licensed. Copied here so ruby-openai can stream Server-Sent Events on
+# Ruby 2.3.8, where the upstream gem cannot install (it requires Ruby >= 2.6).
+#
+# Modifications from the upstream gem:
+#   * `String#match?` (Ruby 2.4+) replaced with `=~` (returns nil on miss; truthy on match).
+#   * `String#delete_prefix!` (Ruby 2.5+) replaced with `sub!`.
+#   * `+''` (frozen-string mutable literal) replaced with `String.new` for clarity on 2.3.
+
+module OpenAI
+  module EventStreamParser
+    # Spec-compliant SSE parser. See:
+    # https://html.spec.whatwg.org/multipage/server-sent-events.html
+    # Section: 9.2.6 Interpreting an event stream
+    class Parser
+      def initialize
+        @data_buffer = String.new
+        @event_type_buffer = String.new
+        @last_event_id_buffer = String.new
+
+        @reconnection_time = nil
+        @buffer = String.new
+        @last_delimiter = nil
+      end
+
+      def feed(chunk, &proc)
+        @buffer << chunk
+
+        @buffer.sub!(/\A\n/, "") if @last_delimiter == "\r"
+
+        while (line = @buffer.slice!(/.*?(?<delim>\r\n|\r|\n)/))
+          line.chomp!
+          @last_delimiter = $~[:delim]
+          process_line(line, &proc)
+        end
+      end
+
+      def stream
+        proc { |chunk| feed(chunk) { |*args| yield(*args) } }
+      end
+
+      private
+
+      def process_line(line, &proc)
+        case line
+        when ""
+          dispatch_event(&proc)
+        when /^:/
+          ignore
+        when /\A(?<field>[^:]+):\s?(?<value>.*)\z/
+          process_field($~[:field], $~[:value])
+        else
+          process_field(line, "")
+        end
+      end
+
+      def process_field(field, value)
+        case field
+        when "event"
+          @event_type_buffer = value
+        when "data"
+          @data_buffer << value << "\n"
+        when "id"
+          @last_event_id_buffer = value unless value.include?("\u0000")
+        when "retry"
+          @reconnection_time = value.to_i if value =~ /\A\d+\z/
+        else
+          ignore
+        end
+      end
+
+      def dispatch_event
+        id = @last_event_id_buffer
+
+        if @data_buffer.empty?
+          @data_buffer = String.new
+          @event_type_buffer = String.new
+          return
+        end
+
+        @data_buffer.chomp!
+
+        type = @event_type_buffer
+        data = @data_buffer
+
+        @data_buffer = String.new
+        @event_type_buffer = String.new
+
+        yield type, data, id, @reconnection_time
+      end
+
+      def ignore; end
+    end
+  end
+end
